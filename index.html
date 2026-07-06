@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suministros · Bodega Quito</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#15171a;
+    --panel:#1c1f23;
+    --panel-2:#22262b;
+    --border:#2c3136;
+    --text:#eceef0;
+    --muted:#8b9096;
+    --amber:#f5a623;
+    --amber-dark:#c97f14;
+    --steel:#4d8fac;
+    --ok:#4caf6d;
+    --danger:#e0524d;
+    --radius:3px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
+  h1,h2,h3,.disp{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.04em;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  a{color:var(--amber);}
+
+  /* ---------- barra superior tipo manifiesto de carga ---------- */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 24px;background:var(--panel);border-bottom:3px solid var(--amber);
+  }
+  .topbar .brand{display:flex;align-items:center;gap:10px;}
+  .brand svg{flex-shrink:0;}
+  .brand-text{font-family:'Oswald',sans-serif;font-weight:700;font-size:19px;letter-spacing:.06em;text-transform:uppercase;}
+  .brand-text small{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:none;}
+  .userchip{display:flex;align-items:center;gap:10px;}
+  .role-badge{
+    font-family:'JetBrains Mono',monospace;font-size:11px;padding:3px 8px;border-radius:2px;
+    text-transform:uppercase;letter-spacing:.08em;font-weight:600;
+  }
+  .role-badge.admin{background:rgba(245,166,35,.15);color:var(--amber);border:1px solid var(--amber-dark);}
+  .role-badge.solicitante{background:rgba(77,143,172,.15);color:var(--steel);border:1px solid var(--steel);}
+  .btn{
+    font-family:'Inter',sans-serif;font-weight:600;font-size:13px;border:none;border-radius:var(--radius);
+    padding:9px 16px;cursor:pointer;transition:filter .15s;
+  }
+  .btn:hover{filter:brightness(1.12);}
+  .btn-amber{background:var(--amber);color:#1a1300;}
+  .btn-steel{background:var(--steel);color:#08161b;}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text);}
+  .btn-danger{background:var(--danger);color:#210000;}
+  .btn-sm{padding:5px 10px;font-size:12px;}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+
+  /* ---------- login ---------- */
+  .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .login-card{
+    background:var(--panel);border:1px solid var(--border);border-top:4px solid var(--amber);
+    padding:36px 32px;width:100%;max-width:380px;border-radius:var(--radius);
+  }
+  .login-card h1{font-size:22px;margin:0 0 4px;}
+  .login-card p.sub{color:var(--muted);font-size:13px;margin:0 0 24px;}
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;font-weight:600;}
+  input[type=text],input[type=email],input[type=number],select,textarea{
+    width:100%;background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+    padding:10px 12px;border-radius:var(--radius);font-family:'Inter',sans-serif;font-size:14px;margin-bottom:16px;
+  }
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--amber);outline-offset:1px;}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .banner{padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:16px;}
+  .banner.error{background:rgba(224,82,77,.12);border:1px solid var(--danger);color:#ff9d99;}
+  .banner.ok{background:rgba(76,175,109,.12);border:1px solid var(--ok);color:#9be0af;}
+
+  /* ---------- layout general ---------- */
+  .container{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:22px;flex-wrap:wrap;}
+  .tab{
+    padding:10px 16px;font-family:'Oswald',sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;font-weight:600;
+  }
+  .tab.active{color:var(--amber);border-color:var(--amber);}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:20px;}
+  .panel h2{font-size:16px;margin:0 0 18px;color:var(--text);display:flex;align-items:center;gap:10px;}
+  .panel h2::before{content:'';width:4px;height:16px;background:var(--amber);display:inline-block;}
+
+  /* ---------- catálogo ---------- */
+  .grid-cat{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;}
+  .art-card{background:var(--panel-2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;}
+  .art-card.selected{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber) inset;}
+  .art-img{width:100%;height:110px;object-fit:cover;background:#0f1113;display:block;}
+  .art-body{padding:10px 12px;display:flex;flex-direction:column;gap:6px;flex:1;}
+  .art-name{font-size:13px;font-weight:600;}
+  .stamp{
+    align-self:flex-start;font-family:'JetBrains Mono',monospace;font-size:10px;
+    border:1px solid var(--border);padding:2px 6px;border-radius:2px;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.05em;
+  }
+  .stamp.low{color:var(--danger);border-color:var(--danger);}
+  .qty-row{display:flex;align-items:center;gap:8px;margin-top:auto;}
+  .qty-row button{width:26px;height:26px;background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:2px;cursor:pointer;font-size:14px;}
+  .qty-row input{width:48px;text-align:center;margin:0;padding:5px;font-family:'JetBrains Mono',monospace;}
+  textarea{min-height:52px;resize:vertical;}
+
+  /* ---------- listas admin ---------- */
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;padding:8px 10px;border-bottom:1px solid var(--border);}
+  td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  .chip-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+  .chip{
+    display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--border);
+    padding:6px 8px 6px 12px;border-radius:20px;font-size:13px;
+  }
+  .chip button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;line-height:1;padding:2px;}
+  .chip button:hover{color:var(--danger);}
+  .inline-form{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;}
+  .inline-form>div{flex:1;min-width:140px;}
+  .inline-form label{margin-bottom:6px;}
+  .inline-form input,.inline-form select{margin-bottom:0;}
+  .status-pill{font-family:'JetBrains Mono',monospace;font-size:11px;padding:3px 8px;border-radius:2px;text-transform:uppercase;}
+  .status-pill.Pendiente{background:rgba(245,166,35,.15);color:var(--amber);}
+  .status-pill.Procesado{background:rgba(77,143,172,.15);color:var(--steel);}
+  .status-pill.Enviado{background:rgba(76,175,109,.15);color:var(--ok);}
+  .req-items{font-size:12px;color:var(--muted);margin-top:4px;}
+  .divider-ticket{
+    height:1px;background:repeating-linear-gradient(90deg,var(--border) 0 6px,transparent 6px 12px);
+    margin:18px 0;
+  }
+  .empty{color:var(--muted);font-size:13px;padding:20px 0;text-align:center;}
+  .hint{color:var(--muted);font-size:12px;margin-top:-8px;margin-bottom:16px;}
+  .required::after{content:' *';color:var(--danger);}
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+/* ==========================================================================
+   CONFIGURACIÓN
+   Reemplaza esta URL por la de tu implementación de Google Apps Script
+   (Implementar > Nueva implementación > Aplicación web > Acceso: Cualquiera)
+   ========================================================================== */
+const API_URL = "PEGA_AQUI_LA_URL_DE_TU_APPS_SCRIPT_WEB_APP";
+
+const SECCIONES = ["Oficina", "Limpieza"];
+const SOLICITADO_POR = ["Bodega", "Técnica"];
+
+let state = {
+  usuario: JSON.parse(localStorage.getItem('suministros_usuario') || 'null'),
+  catalogo: [],
+  destinos: [],
+  carrito: {}, // id -> {cantidad, justificacion}
+  adminTab: 'solicitudes',
+  adminData: null,
+  solicitudes: null,
+  loading: false,
+  loginError: '',
+  formError: '',
+  formOk: false
+};
+
+function api(action, payload) {
+  return fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(Object.assign({ action }, payload || {}))
+  }).then(r => r.json());
+}
+
+function apiGet(action) {
+  return fetch(API_URL + '?action=' + action).then(r => r.json());
+}
+
+function render() {
+  const el = document.getElementById('app');
+  if (!state.usuario) {
+    el.innerHTML = renderLogin();
+    bindLogin();
+    return;
+  }
+  el.innerHTML = renderTopbar() + (state.usuario.rol === 'admin' ? renderAdmin() : renderSolicitante());
+  bindCommon();
+  if (state.usuario.rol === 'admin') bindAdmin(); else bindSolicitante();
+}
+
+/* ---------------------------- ICONO DE MARCA ---------------------------- */
+function brandIcon(){
+  return `<svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+    <rect x="3" y="9" width="24" height="16" rx="1" stroke="#f5a623" stroke-width="2"/>
+    <path d="M3 14H27" stroke="#f5a623" stroke-width="2"/>
+    <path d="M9 9V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3" stroke="#f5a623" stroke-width="2"/>
+  </svg>`;
+}
+
+/* ---------------------------- LOGIN ---------------------------- */
+function renderLogin() {
+  return `
+  <div class="login-wrap">
+    <div class="login-card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+        ${brandIcon()}
+        <div class="brand-text">Suministros<small>BODEGA QUITO</small></div>
+      </div>
+      <h1>Ingresar</h1>
+      <p class="sub">Escribe tu correo institucional para continuar. Tu rol es asignado por el administrador.</p>
+      ${state.loginError ? `<div class="banner error">${state.loginError}</div>` : ''}
+      <label class="required">Correo electrónico</label>
+      <input type="email" id="loginEmail" placeholder="nombre@institucion.gob.ec" autocomplete="email">
+      <button class="btn btn-amber" id="loginBtn" style="width:100%;">${state.loading ? 'Verificando…' : 'Ingresar'}</button>
+    </div>
+  </div>`;
+}
+
+function bindLogin() {
+  const btn = document.getElementById('loginBtn');
+  const input = document.getElementById('loginEmail');
+  const submit = () => {
+    const email = input.value.trim();
+    if (!email) { state.loginError = 'Ingresa un correo.'; render(); return; }
+    state.loading = true; state.loginError = ''; render();
+    api('login', { email }).then(res => {
+      state.loading = false;
+      if (res.ok) {
+        state.usuario = { email: res.email, nombre: res.nombre, rol: res.rol };
+        localStorage.setItem('suministros_usuario', JSON.stringify(state.usuario));
+        loadInitData();
+      } else {
+        state.loginError = res.error || 'No se pudo iniciar sesión.';
+        render();
+      }
+    }).catch(() => { state.loading = false; state.loginError = 'Error de conexión con el servidor.'; render(); });
+  };
+  btn.addEventListener('click', submit);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+}
+
+/* ---------------------------- BARRA SUPERIOR ---------------------------- */
+function renderTopbar() {
+  const u = state.usuario;
+  return `
+  <div class="topbar">
+    <div class="brand">
+      ${brandIcon()}
+      <div class="brand-text">Suministros<small>BODEGA QUITO</small></div>
+    </div>
+    <div class="userchip">
+      <span class="mono" style="font-size:13px;color:var(--muted);">${u.nombre}</span>
+      <span class="role-badge ${u.rol}">${u.rol}</span>
+      <button class="btn btn-ghost btn-sm" id="logoutBtn">Salir</button>
+    </div>
+  </div>`;
+}
+
+function bindCommon() {
+  const lo = document.getElementById('logoutBtn');
+  if (lo) lo.addEventListener('click', () => {
+    localStorage.removeItem('suministros_usuario');
+    state.usuario = null; state.catalogo = []; state.destinos = []; state.carrito = {};
+    render();
+  });
+}
+
+function loadInitData() {
+  apiGet('init').then(res => {
+    state.catalogo = res.catalogo || [];
+    state.destinos = res.destinos || [];
+    render();
+  }).catch(() => render());
+}
+
+/* ==========================================================================
+   VISTA SOLICITANTE
+   ========================================================================== */
+function renderSolicitante() {
+  const carritoCount = Object.keys(state.carrito).length;
+  return `
+  <div class="container">
+    <div class="panel">
+      <h2>Datos de la solicitud</h2>
+      <div class="field-row">
+        <div>
+          <label class="required">Sección</label>
+          <select id="fSeccion">
+            <option value="">Selecciona…</option>
+            ${SECCIONES.map(s => `<option value="${s}">${s}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label class="required">Solicitado por</label>
+          <select id="fSolicitadoPor">
+            <option value="">Selecciona…</option>
+            ${SOLICITADO_POR.map(s => `<option value="${s}">${s}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div>
+          <label class="required">Destino</label>
+          <select id="fDestino">
+            <option value="">Selecciona…</option>
+            ${state.destinos.map(d => `<option value="${d}">${d}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label class="required">Nombre del solicitante</label>
+          <input type="text" id="fNombre" placeholder="Nombre completo">
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Catálogo de artículos ${carritoCount ? `<span class="stamp" style="margin-left:6px;">${carritoCount} seleccionado(s)</span>` : ''}</h2>
+      ${state.catalogo.length === 0 ? '<div class="empty">No hay artículos disponibles por el momento.</div>' : `
+      <div class="grid-cat">
+        ${state.catalogo.map(a => renderArticuloCard(a)).join('')}
+      </div>`}
+    </div>
+
+    ${state.formError ? `<div class="banner error">${state.formError}</div>` : ''}
+    ${state.formOk ? `<div class="banner ok">Solicitud enviada correctamente. Se notificó a la coordinadora de bodega.</div>` : ''}
+
+    <button class="btn btn-amber" id="enviarSolicitudBtn" ${state.loading ? 'disabled' : ''}>
+      ${state.loading ? 'Enviando…' : 'Enviar solicitud'}
+    </button>
+  </div>`;
+}
+
+function renderArticuloCard(a) {
+  const enCarrito = state.carrito[a.ID];
+  const cantidad = enCarrito ? enCarrito.cantidad : 0;
+  const disponible = Number(a.CantidadDisponible);
+  const low = disponible <= 3;
+  return `
+  <div class="art-card ${enCarrito ? 'selected' : ''}" data-id="${a.ID}">
+    <img class="art-img" src="${a.FotoURL || 'https://placehold.co/300x160/1c1f23/8b9096?text=Sin+foto'}" alt="${a.Nombre}">
+    <div class="art-body">
+      <div class="art-name">${a.Nombre}</div>
+      <div class="stamp ${low ? 'low' : ''}">DISP. ${disponible}</div>
+      <div class="qty-row">
+        <button type="button" class="qty-minus">−</button>
+        <input type="number" class="qty-input mono" min="0" max="${disponible}" value="${cantidad}">
+        <button type="button" class="qty-plus">+</button>
+      </div>
+      ${cantidad > 5 ? `<textarea class="justif" placeholder="Justifica por qué necesitas más de 5 unidades…">${enCarrito ? (enCarrito.justificacion||'') : ''}</textarea>` : ''}
+    </div>
+  </div>`;
+}
+
+function bindSolicitante() {
+  document.querySelectorAll('.art-card').forEach(card => {
+    const id = card.dataset.id;
+    const input = card.querySelector('.qty-input');
+    const max = Number(input.max);
+
+    const setQty = (val) => {
+      val = Math.max(0, Math.min(max, val));
+      if (val <= 0) { delete state.carrito[id]; }
+      else {
+        const art = state.catalogo.find(a => a.ID === id);
+        state.carrito[id] = state.carrito[id] || { id, nombre: art.Nombre, cantidad: 0, justificacion: '' };
+        state.carrito[id].cantidad = val;
+      }
+      render();
+    };
+
+    card.querySelector('.qty-minus').addEventListener('click', () => setQty(Number(input.value) - 1));
+    card.querySelector('.qty-plus').addEventListener('click', () => setQty(Number(input.value) + 1));
+    input.addEventListener('change', () => setQty(Number(input.value)));
+
+    const justif = card.querySelector('.justif');
+    if (justif) justif.addEventListener('input', () => { state.carrito[id].justificacion = justif.value; });
+  });
+
+  document.getElementById('enviarSolicitudBtn').addEventListener('click', () => {
+    const seccion = document.getElementById('fSeccion').value;
+    const solicitadoPor = document.getElementById('fSolicitadoPor').value;
+    const destino = document.getElementById('fDestino').value;
+    const nombreSolicitante = document.getElementById('fNombre').value.trim();
+    const items = Object.values(state.carrito);
+
+    state.formOk = false;
+    if (!seccion || !solicitadoPor || !destino || !nombreSolicitante) {
+      state.formError = 'Completa todos los campos obligatorios del formulario.'; render(); return;
+    }
+    if (!items.length) {
+      state.formError = 'Selecciona al menos un artículo.'; render(); return;
+    }
+    for (const it of items) {
+      if (it.cantidad > 5 && !it.justificacion) {
+        state.formError = `Justifica la cantidad solicitada para "${it.nombre}".`; render(); return;
+      }
+    }
+
+    state.loading = true; state.formError = ''; render();
+    api('crearSolicitud', {
+      seccion, solicitadoPor, destino, nombreSolicitante,
+      emailSolicitante: state.usuario.email, items
+    }).then(res => {
+      state.loading = false;
+      if (res.ok) {
+        state.formOk = true; state.carrito = {};
+        loadInitData();
+      } else {
+        state.formError = res.error || 'No se pudo enviar la solicitud.'; render();
+      }
+    }).catch(() => { state.loading = false; state.formError = 'Error de conexión.'; render(); });
+  });
+}
+
+/* ==========================================================================
+   VISTA ADMINISTRADOR
+   ========================================================================== */
+function renderAdmin() {
+  if (!state.adminData) {
+    loadAdminData();
+    return `<div class="container"><div class="empty">Cargando panel de administración…</div></div>`;
+  }
+  const tabs = [
+    ['solicitudes', 'Solicitudes'],
+    ['catalogo', 'Catálogo'],
+    ['destinos', 'Destinos'],
+    ['correos', 'Correos'],
+    ['usuarios', 'Usuarios']
+  ];
+  return `
+  <div class="container">
+    <div class="tabs">
+      ${tabs.map(([k, label]) => `<div class="tab ${state.adminTab === k ? 'active' : ''}" data-tab="${k}">${label}</div>`).join('')}
+    </div>
+    ${state.adminTab === 'solicitudes' ? renderTabSolicitudes() : ''}
+    ${state.adminTab === 'catalogo' ? renderTabCatalogo() : ''}
+    ${state.adminTab === 'destinos' ? renderTabDestinos() : ''}
+    ${state.adminTab === 'correos' ? renderTabCorreos() : ''}
+    ${state.adminTab === 'usuarios' ? renderTabUsuarios() : ''}
+  </div>`;
+}
+
+function loadAdminData() {
+  Promise.all([
+    api('getAdminData', { adminEmail: state.usuario.email }),
+    api('getSolicitudes', { adminEmail: state.usuario.email })
+  ]).then(([adminData, solData]) => {
+    state.adminData = adminData;
+    state.solicitudes = solData.solicitudes || [];
+    render();
+  });
+}
+
+function refreshAdminData() { state.adminData = null; state.solicitudes = null; render(); }
+
+/* --- Tab: Solicitudes --- */
+function renderTabSolicitudes() {
+  const sols = state.solicitudes || [];
+  return `
+  <div class="panel">
+    <h2>Solicitudes recibidas</h2>
+    ${sols.length === 0 ? '<div class="empty">Aún no hay solicitudes registradas.</div>' : `
+    <table>
+      <thead><tr><th>Fecha</th><th>Destino</th><th>Solicitante</th><th>Sección</th><th>Artículos</th><th>Estado</th></tr></thead>
+      <tbody>
+        ${sols.map(s => `
+        <tr>
+          <td class="mono">${new Date(s.Timestamp).toLocaleString('es-EC')}</td>
+          <td>${s.Destino}</td>
+          <td>${s.NombreSolicitante}</td>
+          <td>${s.Seccion} · ${s.SolicitadoPor}</td>
+          <td>
+            <div class="req-items">${(s.Items||[]).map(i => `${i.nombre} × ${i.cantidad}`).join(', ')}</div>
+          </td>
+          <td>
+            <select class="estado-select" data-row="${s._row}">
+              ${['Pendiente','Procesado','Enviado'].map(op => `<option value="${op}" ${s.Estado===op?'selected':''}>${op}</option>`).join('')}
+            </select>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`}
+  </div>`;
+}
+
+/* --- Tab: Catálogo --- */
+function renderTabCatalogo() {
+  const items = state.adminData.catalogo;
+  return `
+  <div class="panel">
+    <h2>Añadir artículo</h2>
+    <div class="inline-form">
+      <div><label class="required">Nombre</label><input type="text" id="newArtNombre"></div>
+      <div><label>Cantidad disponible</label><input type="number" id="newArtCantidad" min="0" value="0"></div>
+      <div><label>Fotografía</label><input type="file" id="newArtFoto" accept="image/*"></div>
+      <div><button class="btn btn-amber" id="addArtBtn">Añadir</button></div>
+    </div>
+    <div class="hint">Puedes subir una foto o dejarlo en blanco; se puede editar más adelante.</div>
+  </div>
+
+  <div class="panel">
+    <h2>Catálogo actual</h2>
+    ${items.length === 0 ? '<div class="empty">No hay artículos en el catálogo.</div>' : `
+    <table>
+      <thead><tr><th>Foto</th><th>Nombre</th><th>Disponible</th><th>Activo</th><th></th></tr></thead>
+      <tbody>
+        ${items.map(a => `
+        <tr data-id="${a.ID}">
+          <td><img src="${a.FotoURL || 'https://placehold.co/60x40/1c1f23/8b9096?text=—'}" style="width:60px;height:40px;object-fit:cover;border-radius:2px;"></td>
+          <td><input type="text" class="edit-nombre" value="${a.Nombre}" style="margin:0;padding:5px 8px;"></td>
+          <td><input type="number" class="edit-cantidad mono" value="${a.CantidadDisponible}" min="0" style="width:80px;margin:0;padding:5px 8px;"></td>
+          <td><input type="checkbox" class="edit-activo" ${a.Activo !== false && a.Activo !== 'FALSE' ? 'checked' : ''}></td>
+          <td style="display:flex;gap:6px;">
+            <button class="btn btn-steel btn-sm save-art">Guardar</button>
+            <button class="btn btn-danger btn-sm del-art">Eliminar</button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`}
+  </div>`;
+}
+
+/* --- Tab: Destinos --- */
+function renderTabDestinos() {
+  return `
+  <div class="panel">
+    <h2>Destinos configurables</h2>
+    <div class="chip-list">
+      ${state.adminData.destinos.map(d => `<div class="chip">${d}<button class="del-destino" data-v="${d}">×</button></div>`).join('') || '<span class="empty">Ningún destino configurado aún.</span>'}
+    </div>
+    <div class="inline-form">
+      <div><label>Nuevo destino</label><input type="text" id="newDestino" placeholder="Ej. Bodega Zonal Norte"></div>
+      <div><button class="btn btn-amber" id="addDestinoBtn">Añadir</button></div>
+    </div>
+  </div>`;
+}
+
+/* --- Tab: Correos --- */
+function renderTabCorreos() {
+  return `
+  <div class="panel">
+    <h2>Correos de notificación</h2>
+    <div class="hint">Estos correos recibirán la confirmación automática de cada solicitud enviada.</div>
+    <div class="chip-list">
+      ${state.adminData.emails.map(e => `<div class="chip">${e}<button class="del-email" data-v="${e}">×</button></div>`).join('') || '<span class="empty">Ningún correo configurado aún.</span>'}
+    </div>
+    <div class="inline-form">
+      <div><label>Nuevo correo</label><input type="email" id="newEmail" placeholder="coordinadora@institucion.gob.ec"></div>
+      <div><button class="btn btn-amber" id="addEmailBtn">Añadir</button></div>
+    </div>
+  </div>`;
+}
+
+/* --- Tab: Usuarios --- */
+function renderTabUsuarios() {
+  const users = state.adminData.usuarios;
+  return `
+  <div class="panel">
+    <h2>Añadir usuario</h2>
+    <div class="inline-form">
+      <div><label class="required">Correo</label><input type="email" id="newUserEmail"></div>
+      <div><label>Nombre</label><input type="text" id="newUserNombre"></div>
+      <div><label>Rol</label>
+        <select id="newUserRol"><option value="solicitante">Solicitante</option><option value="admin">Administrador</option></select>
+      </div>
+      <div><button class="btn btn-amber" id="addUserBtn">Añadir</button></div>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Usuarios registrados</h2>
+    ${users.length === 0 ? '<div class="empty">No hay usuarios registrados.</div>' : `
+    <table>
+      <thead><tr><th>Correo</th><th>Nombre</th><th>Rol</th><th></th></tr></thead>
+      <tbody>
+        ${users.map(u => `
+        <tr data-email="${u.Email}">
+          <td class="mono">${u.Email}</td>
+          <td>${u.Nombre}</td>
+          <td>
+            <select class="user-rol">
+              <option value="solicitante" ${u.Rol==='solicitante'?'selected':''}>Solicitante</option>
+              <option value="admin" ${u.Rol==='admin'?'selected':''}>Administrador</option>
+            </select>
+          </td>
+          <td><button class="btn btn-danger btn-sm del-user">Eliminar</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`}
+  </div>`;
+}
+
+/* ---------------------------- BINDINGS ADMIN ---------------------------- */
+function bindAdmin() {
+  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+    state.adminTab = t.dataset.tab; render();
+  }));
+
+  if (state.adminTab === 'solicitudes') {
+    document.querySelectorAll('.estado-select').forEach(sel => {
+      sel.addEventListener('change', () => {
+        api('actualizarEstado', { adminEmail: state.usuario.email, row: sel.dataset.row, estado: sel.value });
+      });
+    });
+  }
+
+  if (state.adminTab === 'catalogo') {
+    document.getElementById('addArtBtn').addEventListener('click', () => {
+      const nombre = document.getElementById('newArtNombre').value.trim();
+      const cantidad = document.getElementById('newArtCantidad').value;
+      const fotoInput = document.getElementById('newArtFoto');
+      if (!nombre) { alert('El nombre es obligatorio.'); return; }
+
+      const crear = (fotoURL) => {
+        api('adminAddArticulo', { adminEmail: state.usuario.email, nombre, cantidad, fotoURL }).then(refreshAdminData);
+      };
+      if (fotoInput.files && fotoInput.files[0]) {
+        fileToBase64(fotoInput.files[0]).then(({ base64, mimeType, name }) => {
+          api('subirImagen', { adminEmail: state.usuario.email, dataBase64: base64, mimeType, nombreArchivo: name })
+            .then(res => crear(res.url || ''));
+        });
+      } else { crear(''); }
+    });
+
+    document.querySelectorAll('tr[data-id]').forEach(row => {
+      const id = row.dataset.id;
+      row.querySelector('.save-art').addEventListener('click', () => {
+        api('adminUpdateArticulo', {
+          adminEmail: state.usuario.email, id,
+          nombre: row.querySelector('.edit-nombre').value,
+          cantidad: row.querySelector('.edit-cantidad').value,
+          activo: row.querySelector('.edit-activo').checked
+        }).then(refreshAdminData);
+      });
+      row.querySelector('.del-art').addEventListener('click', () => {
+        if (confirm('¿Eliminar este artículo del catálogo?')) {
+          api('adminDeleteArticulo', { adminEmail: state.usuario.email, id }).then(refreshAdminData);
+        }
+      });
+    });
+  }
+
+  if (state.adminTab === 'destinos') {
+    document.getElementById('addDestinoBtn').addEventListener('click', () => {
+      const destino = document.getElementById('newDestino').value.trim();
+      if (!destino) return;
+      api('adminAddDestino', { adminEmail: state.usuario.email, destino }).then(refreshAdminData);
+    });
+    document.querySelectorAll('.del-destino').forEach(b => b.addEventListener('click', () => {
+      api('adminDeleteDestino', { adminEmail: state.usuario.email, destino: b.dataset.v }).then(refreshAdminData);
+    }));
+  }
+
+  if (state.adminTab === 'correos') {
+    document.getElementById('addEmailBtn').addEventListener('click', () => {
+      const email = document.getElementById('newEmail').value.trim();
+      if (!email) return;
+      api('adminAddEmail', { adminEmail: state.usuario.email, email }).then(refreshAdminData);
+    });
+    document.querySelectorAll('.del-email').forEach(b => b.addEventListener('click', () => {
+      api('adminDeleteEmail', { adminEmail: state.usuario.email, email: b.dataset.v }).then(refreshAdminData);
+    }));
+  }
+
+  if (state.adminTab === 'usuarios') {
+    document.getElementById('addUserBtn').addEventListener('click', () => {
+      const email = document.getElementById('newUserEmail').value.trim();
+      const nombre = document.getElementById('newUserNombre').value.trim();
+      const rol = document.getElementById('newUserRol').value;
+      if (!email) return;
+      api('adminAddUsuario', { adminEmail: state.usuario.email, email, nombre, rol }).then(refreshAdminData);
+    });
+    document.querySelectorAll('tr[data-email]').forEach(row => {
+      const email = row.dataset.email;
+      row.querySelector('.user-rol').addEventListener('change', (e) => {
+        api('adminSetRole', { adminEmail: state.usuario.email, email, rol: e.target.value }).then(refreshAdminData);
+      });
+      row.querySelector('.del-user').addEventListener('click', () => {
+        if (confirm('¿Eliminar este usuario?')) {
+          api('adminDeleteUsuario', { adminEmail: state.usuario.email, email }).then(refreshAdminData);
+        }
+      });
+    });
+  }
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve({
+      base64: reader.result.split(',')[1],
+      mimeType: file.type,
+      name: file.name
+    });
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+/* ---------------------------- ARRANQUE ---------------------------- */
+if (state.usuario) { render(); loadInitData(); if (state.usuario.rol === 'admin') loadAdminData(); }
+else { render(); }
+</script>
+</body>
+</html>
