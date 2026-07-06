@@ -543,7 +543,7 @@ function renderTabCorreos() {
       ${state.adminData.emails.map(e => `<div class="chip">${e}<button class="del-email" data-v="${e}">×</button></div>`).join('') || '<span class="empty">Ningún correo configurado aún.</span>'}
     </div>
     <div class="inline-form">
-      <div><label>Nuevo correo</label><input type="email" id="newEmail" placeholder="coordinadora@institucion.gob.ec"></div>
+      <div><label>Nuevo correo</label><input type="email" id="newEmail" placeholder="coordinadora@institucion.com"></div>
       <div><button class="btn btn-amber" id="addEmailBtn">Añadir</button></div>
     </div>
   </div>`;
