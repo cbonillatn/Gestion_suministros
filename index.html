@@ -208,7 +208,7 @@ function renderLogin() {
       <p class="sub">Escribe tu correo institucional para continuar. Tu rol es asignado por el administrador.</p>
       ${state.loginError ? `<div class="banner error">${state.loginError}</div>` : ''}
       <label class="required">Correo electrónico</label>
-      <input type="email" id="loginEmail" placeholder="nombre@institucion.gob.ec" autocomplete="email">
+      <input type="email" id="loginEmail" placeholder="nombre@institucion.com" autocomplete="email">
       <button class="btn btn-amber" id="loginBtn" style="width:100%;">${state.loading ? 'Verificando…' : 'Ingresar'}</button>
     </div>
   </div>`;
