@@ -143,9 +143,9 @@
    Reemplaza esta URL por la de tu implementación de Google Apps Script
    (Implementar > Nueva implementación > Aplicación web > Acceso: Cualquiera)
    ========================================================================== */
-const API_URL = "https://script.google.com/macros/s/AKfycbwaONBSiISOns7jdHPsFNKdHXp3tFfBn8aeINkDgLLofUzFI673EtXgb1F_fx7KqEtk/exec";
+const API_URL = "PEGA_AQUI_LA_URL_DE_TU_APPS_SCRIPT_WEB_APP";
 
-const SECCIONES = ["Oficina", "Limpieza"];
+const CATEGORIAS = ["Oficina", "Limpieza"];
 const SOLICITADO_POR = ["Bodega", "Técnica"];
 
 let state = {
@@ -153,6 +153,7 @@ let state = {
   catalogo: [],
   destinos: [],
   carrito: {}, // id -> {cantidad, justificacion}
+  categoriaFiltro: 'Todos',
   adminTab: 'solicitudes',
   adminData: null,
   solicitudes: null,
@@ -276,18 +277,15 @@ function loadInitData() {
    ========================================================================== */
 function renderSolicitante() {
   const carritoCount = Object.keys(state.carrito).length;
+  const catalogoFiltrado = state.categoriaFiltro === 'Todos'
+    ? state.catalogo
+    : state.catalogo.filter(a => a.Categoria === state.categoriaFiltro);
+
   return `
   <div class="container">
     <div class="panel">
       <h2>Datos de la solicitud</h2>
       <div class="field-row">
-        <div>
-          <label class="required">Sección</label>
-          <select id="fSeccion">
-            <option value="">Selecciona…</option>
-            ${SECCIONES.map(s => `<option value="${s}">${s}</option>`).join('')}
-          </select>
-        </div>
         <div>
           <label class="required">Solicitado por</label>
           <select id="fSolicitadoPor">
@@ -295,8 +293,6 @@ function renderSolicitante() {
             ${SOLICITADO_POR.map(s => `<option value="${s}">${s}</option>`).join('')}
           </select>
         </div>
-      </div>
-      <div class="field-row">
         <div>
           <label class="required">Destino</label>
           <select id="fDestino">
@@ -304,18 +300,25 @@ function renderSolicitante() {
             ${state.destinos.map(d => `<option value="${d}">${d}</option>`).join('')}
           </select>
         </div>
+      </div>
+      <div class="field-row">
         <div>
           <label class="required">Nombre del solicitante</label>
           <input type="text" id="fNombre" placeholder="Nombre completo">
         </div>
+        <div></div>
       </div>
     </div>
 
     <div class="panel">
       <h2>Catálogo de artículos ${carritoCount ? `<span class="stamp" style="margin-left:6px;">${carritoCount} seleccionado(s)</span>` : ''}</h2>
-      ${state.catalogo.length === 0 ? '<div class="empty">No hay artículos disponibles por el momento.</div>' : `
+      <div class="tabs" style="margin-bottom:16px;">
+        ${['Todos', ...CATEGORIAS].map(c => `<div class="tab ${state.categoriaFiltro === c ? 'active' : ''}" data-cat="${c}">${c}</div>`).join('')}
+      </div>
+      <div class="hint" style="margin-top:-10px;">Puedes cambiar de pestaña y elegir artículos de ambas categorías; todo se agrega al mismo pedido.</div>
+      ${catalogoFiltrado.length === 0 ? '<div class="empty">No hay artículos disponibles en esta categoría.</div>' : `
       <div class="grid-cat">
-        ${state.catalogo.map(a => renderArticuloCard(a)).join('')}
+        ${catalogoFiltrado.map(a => renderArticuloCard(a)).join('')}
       </div>`}
     </div>
 
@@ -331,17 +334,15 @@ function renderSolicitante() {
 function renderArticuloCard(a) {
   const enCarrito = state.carrito[a.ID];
   const cantidad = enCarrito ? enCarrito.cantidad : 0;
-  const disponible = Number(a.CantidadDisponible);
-  const low = disponible <= 3;
   return `
   <div class="art-card ${enCarrito ? 'selected' : ''}" data-id="${a.ID}">
     <img class="art-img" src="${a.FotoURL || 'https://placehold.co/300x160/1c1f23/8b9096?text=Sin+foto'}" alt="${a.Nombre}">
     <div class="art-body">
       <div class="art-name">${a.Nombre}</div>
-      <div class="stamp ${low ? 'low' : ''}">DISP. ${disponible}</div>
+      <div class="stamp">${a.Categoria}</div>
       <div class="qty-row">
         <button type="button" class="qty-minus">−</button>
-        <input type="number" class="qty-input mono" min="0" max="${disponible}" value="${cantidad}">
+        <input type="number" class="qty-input mono" min="0" value="${cantidad}">
         <button type="button" class="qty-plus">+</button>
       </div>
       ${cantidad > 5 ? `<textarea class="justif" placeholder="Justifica por qué necesitas más de 5 unidades…">${enCarrito ? (enCarrito.justificacion||'') : ''}</textarea>` : ''}
@@ -350,17 +351,20 @@ function renderArticuloCard(a) {
 }
 
 function bindSolicitante() {
+  document.querySelectorAll('.tabs .tab[data-cat]').forEach(t => t.addEventListener('click', () => {
+    state.categoriaFiltro = t.dataset.cat; render();
+  }));
+
   document.querySelectorAll('.art-card').forEach(card => {
     const id = card.dataset.id;
     const input = card.querySelector('.qty-input');
-    const max = Number(input.max);
 
     const setQty = (val) => {
-      val = Math.max(0, Math.min(max, val));
+      val = Math.max(0, val);
       if (val <= 0) { delete state.carrito[id]; }
       else {
         const art = state.catalogo.find(a => a.ID === id);
-        state.carrito[id] = state.carrito[id] || { id, nombre: art.Nombre, cantidad: 0, justificacion: '' };
+        state.carrito[id] = state.carrito[id] || { id, nombre: art.Nombre, categoria: art.Categoria, cantidad: 0, justificacion: '' };
         state.carrito[id].cantidad = val;
       }
       render();
@@ -375,14 +379,13 @@ function bindSolicitante() {
   });
 
   document.getElementById('enviarSolicitudBtn').addEventListener('click', () => {
-    const seccion = document.getElementById('fSeccion').value;
     const solicitadoPor = document.getElementById('fSolicitadoPor').value;
     const destino = document.getElementById('fDestino').value;
     const nombreSolicitante = document.getElementById('fNombre').value.trim();
     const items = Object.values(state.carrito);
 
     state.formOk = false;
-    if (!seccion || !solicitadoPor || !destino || !nombreSolicitante) {
+    if (!solicitadoPor || !destino || !nombreSolicitante) {
       state.formError = 'Completa todos los campos obligatorios del formulario.'; render(); return;
     }
     if (!items.length) {
@@ -396,7 +399,7 @@ function bindSolicitante() {
 
     state.loading = true; state.formError = ''; render();
     api('crearSolicitud', {
-      seccion, solicitadoPor, destino, nombreSolicitante,
+      solicitadoPor, destino, nombreSolicitante,
       emailSolicitante: state.usuario.email, items
     }).then(res => {
       state.loading = false;
@@ -459,14 +462,14 @@ function renderTabSolicitudes() {
     <h2>Solicitudes recibidas</h2>
     ${sols.length === 0 ? '<div class="empty">Aún no hay solicitudes registradas.</div>' : `
     <table>
-      <thead><tr><th>Fecha</th><th>Destino</th><th>Solicitante</th><th>Sección</th><th>Artículos</th><th>Estado</th></tr></thead>
+      <thead><tr><th>Fecha</th><th>Destino</th><th>Solicitante</th><th>Categorías</th><th>Artículos</th><th>Estado</th></tr></thead>
       <tbody>
         ${sols.map(s => `
         <tr>
           <td class="mono">${new Date(s.Timestamp).toLocaleString('es-EC')}</td>
           <td>${s.Destino}</td>
           <td>${s.NombreSolicitante}</td>
-          <td>${s.Seccion} · ${s.SolicitadoPor}</td>
+          <td>${s.Categorias} · ${s.SolicitadoPor}</td>
           <td>
             <div class="req-items">${(s.Items||[]).map(i => `${i.nombre} × ${i.cantidad}`).join(', ')}</div>
           </td>
@@ -489,7 +492,9 @@ function renderTabCatalogo() {
     <h2>Añadir artículo</h2>
     <div class="inline-form">
       <div><label class="required">Nombre</label><input type="text" id="newArtNombre"></div>
-      <div><label>Cantidad disponible</label><input type="number" id="newArtCantidad" min="0" value="0"></div>
+      <div><label class="required">Categoría</label>
+        <select id="newArtCategoria">${CATEGORIAS.map(c => `<option value="${c}">${c}</option>`).join('')}</select>
+      </div>
       <div><label>Fotografía</label><input type="file" id="newArtFoto" accept="image/*"></div>
       <div><button class="btn btn-amber" id="addArtBtn">Añadir</button></div>
     </div>
@@ -500,13 +505,17 @@ function renderTabCatalogo() {
     <h2>Catálogo actual</h2>
     ${items.length === 0 ? '<div class="empty">No hay artículos en el catálogo.</div>' : `
     <table>
-      <thead><tr><th>Foto</th><th>Nombre</th><th>Disponible</th><th>Activo</th><th></th></tr></thead>
+      <thead><tr><th>Foto</th><th>Nombre</th><th>Categoría</th><th>Activo</th><th></th></tr></thead>
       <tbody>
         ${items.map(a => `
         <tr data-id="${a.ID}">
           <td><img src="${a.FotoURL || 'https://placehold.co/60x40/1c1f23/8b9096?text=—'}" style="width:60px;height:40px;object-fit:cover;border-radius:2px;"></td>
           <td><input type="text" class="edit-nombre" value="${a.Nombre}" style="margin:0;padding:5px 8px;"></td>
-          <td><input type="number" class="edit-cantidad mono" value="${a.CantidadDisponible}" min="0" style="width:80px;margin:0;padding:5px 8px;"></td>
+          <td>
+            <select class="edit-categoria" style="margin:0;padding:5px 8px;">
+              ${CATEGORIAS.map(c => `<option value="${c}" ${a.Categoria===c?'selected':''}>${c}</option>`).join('')}
+            </select>
+          </td>
           <td><input type="checkbox" class="edit-activo" ${a.Activo !== false && a.Activo !== 'FALSE' ? 'checked' : ''}></td>
           <td style="display:flex;gap:6px;">
             <button class="btn btn-steel btn-sm save-art">Guardar</button>
@@ -604,12 +613,12 @@ function bindAdmin() {
   if (state.adminTab === 'catalogo') {
     document.getElementById('addArtBtn').addEventListener('click', () => {
       const nombre = document.getElementById('newArtNombre').value.trim();
-      const cantidad = document.getElementById('newArtCantidad').value;
+      const categoria = document.getElementById('newArtCategoria').value;
       const fotoInput = document.getElementById('newArtFoto');
       if (!nombre) { alert('El nombre es obligatorio.'); return; }
 
       const crear = (fotoURL) => {
-        api('adminAddArticulo', { adminEmail: state.usuario.email, nombre, cantidad, fotoURL }).then(refreshAdminData);
+        api('adminAddArticulo', { adminEmail: state.usuario.email, nombre, categoria, fotoURL }).then(refreshAdminData);
       };
       if (fotoInput.files && fotoInput.files[0]) {
         fileToBase64(fotoInput.files[0]).then(({ base64, mimeType, name }) => {
@@ -625,7 +634,7 @@ function bindAdmin() {
         api('adminUpdateArticulo', {
           adminEmail: state.usuario.email, id,
           nombre: row.querySelector('.edit-nombre').value,
-          cantidad: row.querySelector('.edit-cantidad').value,
+          categoria: row.querySelector('.edit-categoria').value,
           activo: row.querySelector('.edit-activo').checked
         }).then(refreshAdminData);
       });
