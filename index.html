@@ -143,7 +143,7 @@
    Reemplaza esta URL por la de tu implementación de Google Apps Script
    (Implementar > Nueva implementación > Aplicación web > Acceso: Cualquiera)
    ========================================================================== */
-const API_URL = "https://script.google.com/macros/s/AKfycbwaONBSiISOns7jdHPsFNKdHXp3tFfBn8aeINkDgLLofUzFI673EtXgb1F_fx7KqEtk/exec";
+const API_URL = "PEGA_AQUI_LA_URL_DE_TU_APPS_SCRIPT_WEB_APP";
 
 const CATEGORIAS = ["Oficina", "Limpieza"];
 const SOLICITADO_POR = ["Bodega", "Técnica"];
@@ -209,7 +209,7 @@ function renderLogin() {
       <p class="sub">Escribe tu correo institucional para continuar. Tu rol es asignado por el administrador.</p>
       ${state.loginError ? `<div class="banner error">${state.loginError}</div>` : ''}
       <label class="required">Correo electrónico</label>
-      <input type="email" id="loginEmail" placeholder="nombre@institucion.com" autocomplete="email">
+      <input type="email" id="loginEmail" placeholder="nombre@institucion.gob.ec" autocomplete="email">
       <button class="btn btn-amber" id="loginBtn" style="width:100%;">${state.loading ? 'Verificando…' : 'Ingresar'}</button>
     </div>
   </div>`;
@@ -460,6 +460,12 @@ function renderTabSolicitudes() {
   return `
   <div class="panel">
     <h2>Solicitudes recibidas</h2>
+    <div class="inline-form" style="margin-bottom:18px;">
+      <div><button class="btn btn-amber" id="genResumenBtn">Generar resumen para preparar</button></div>
+      <div style="flex:2;"><span class="hint" style="margin:0;">Crea/actualiza la pestaña "Resumen_Preparacion" en tu Google Sheet: artículo por fila, un pedido por columna, listo para el corte.</span></div>
+    </div>
+    ${state.resumenMsg ? `<div class="banner ok">${state.resumenMsg}</div>` : ''}
+    ${state.resumenError ? `<div class="banner error">${state.resumenError}</div>` : ''}
     ${sols.length === 0 ? '<div class="empty">Aún no hay solicitudes registradas.</div>' : `
     <table>
       <thead><tr><th>Fecha</th><th>Destino</th><th>Solicitante</th><th>Categorías</th><th>Artículos</th><th>Estado</th></tr></thead>
@@ -474,7 +480,7 @@ function renderTabSolicitudes() {
             <div class="req-items">${(s.Items||[]).map(i => `${i.nombre} × ${i.cantidad}`).join(', ')}</div>
           </td>
           <td>
-            <select class="estado-select" data-row="${s._row}">
+            <select class="estado-select" data-pedido="${s.PedidoID}">
               ${['Pendiente','Procesado','Enviado'].map(op => `<option value="${op}" ${s.Estado===op?'selected':''}>${op}</option>`).join('')}
             </select>
           </td>
@@ -552,7 +558,7 @@ function renderTabCorreos() {
       ${state.adminData.emails.map(e => `<div class="chip">${e}<button class="del-email" data-v="${e}">×</button></div>`).join('') || '<span class="empty">Ningún correo configurado aún.</span>'}
     </div>
     <div class="inline-form">
-      <div><label>Nuevo correo</label><input type="email" id="newEmail" placeholder="coordinadora@institucion.com"></div>
+      <div><label>Nuevo correo</label><input type="email" id="newEmail" placeholder="coordinadora@institucion.gob.ec"></div>
       <div><button class="btn btn-amber" id="addEmailBtn">Añadir</button></div>
     </div>
   </div>`;
@@ -605,7 +611,20 @@ function bindAdmin() {
   if (state.adminTab === 'solicitudes') {
     document.querySelectorAll('.estado-select').forEach(sel => {
       sel.addEventListener('change', () => {
-        api('actualizarEstado', { adminEmail: state.usuario.email, row: sel.dataset.row, estado: sel.value });
+        api('actualizarEstado', { adminEmail: state.usuario.email, pedidoId: sel.dataset.pedido, estado: sel.value });
+      });
+    });
+    const genBtn = document.getElementById('genResumenBtn');
+    if (genBtn) genBtn.addEventListener('click', () => {
+      genBtn.disabled = true; genBtn.textContent = 'Generando…';
+      state.resumenMsg = ''; state.resumenError = '';
+      api('generarResumen', { adminEmail: state.usuario.email, soloPendientes: true }).then(res => {
+        if (res.ok) {
+          state.resumenMsg = `Resumen generado: ${res.filas} artículo(s) de ${res.pedidos} pedido(s). Revisa la pestaña "Resumen_Preparacion" en tu Google Sheet.`;
+        } else {
+          state.resumenError = res.error || 'No se pudo generar el resumen.';
+        }
+        render();
       });
     });
   }
