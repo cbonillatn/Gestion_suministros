@@ -143,7 +143,7 @@
    Reemplaza esta URL por la de tu implementación de Google Apps Script
    (Implementar > Nueva implementación > Aplicación web > Acceso: Cualquiera)
    ========================================================================== */
-const API_URL = "PEGA_AQUI_LA_URL_DE_TU_APPS_SCRIPT_WEB_APP";
+const API_URL = "https://script.google.com/macros/s/AKfycbwaONBSiISOns7jdHPsFNKdHXp3tFfBn8aeINkDgLLofUzFI673EtXgb1F_fx7KqEtk/exec";
 
 const CATEGORIAS = ["Oficina", "Limpieza"];
 const SOLICITADO_POR = ["Bodega", "Técnica"];
@@ -209,7 +209,7 @@ function renderLogin() {
       <p class="sub">Escribe tu correo institucional para continuar. Tu rol es asignado por el administrador.</p>
       ${state.loginError ? `<div class="banner error">${state.loginError}</div>` : ''}
       <label class="required">Correo electrónico</label>
-      <input type="email" id="loginEmail" placeholder="nombre@institucion.gob.ec" autocomplete="email">
+      <input type="email" id="loginEmail" placeholder="nombre@institucion.com" autocomplete="email">
       <button class="btn btn-amber" id="loginBtn" style="width:100%;">${state.loading ? 'Verificando…' : 'Ingresar'}</button>
     </div>
   </div>`;
@@ -558,7 +558,7 @@ function renderTabCorreos() {
       ${state.adminData.emails.map(e => `<div class="chip">${e}<button class="del-email" data-v="${e}">×</button></div>`).join('') || '<span class="empty">Ningún correo configurado aún.</span>'}
     </div>
     <div class="inline-form">
-      <div><label>Nuevo correo</label><input type="email" id="newEmail" placeholder="coordinadora@institucion.gob.ec"></div>
+      <div><label>Nuevo correo</label><input type="email" id="newEmail" placeholder="coordinadora@institucion.com"></div>
       <div><button class="btn btn-amber" id="addEmailBtn">Añadir</button></div>
     </div>
   </div>`;
